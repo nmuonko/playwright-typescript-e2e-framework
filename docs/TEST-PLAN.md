@@ -1,9 +1,9 @@
 # Test Plan
 
-> Status: **Draft for review** (Phase 1 output). Every page, selector and behaviour below
-> was observed on the live sites on 2026-10-28 using read-only Playwright exploration
-> scripts. Every non-GET request was aborted during exploration, so no form, account or
-> order was ever submitted.
+> Status: **Approved and implemented.** This plan was the Phase 1 specification. Every page, selector and
+> behaviour below was observed on the live sites on 2026-10-28 using read-only exploration scripts (all non-GET
+> requests aborted). Section 9 records how the implementation refined the plan; current findings live in
+> [FINDINGS.md](FINDINGS.md) and design rationale in [DECISIONS.md](DECISIONS.md).
 
 ## 1. Scope and ground rules
 
@@ -336,7 +336,10 @@ will be marked `test.fail()` with an annotation linking to `docs/FINDINGS.md`.
 **Totals:** about 37 Faithfulness and 41 AfriShop test cases, which expand through data
 and browser projects. Fewer, meaningful tests were chosen over raw count.
 
-## 5. Candidate findings (to confirm in Phase 3, then file in `docs/FINDINGS.md`)
+## 5. Candidate findings at planning time
+
+> Superseded by [FINDINGS.md](FINDINGS.md), which records what was reproduced (F-AS-10 was withdrawn; F-FH-04/05
+> and F-AS-11…16 were found during implementation).
 
 | ID      | Site | Observation                                                                                                                                                                                         | Proposed severity            |
 | ------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
@@ -376,72 +379,33 @@ Nothing is filed until a Phase 3 test reproduces it deterministically.
 - **Visual baselines** are generated in CI (Linux, pinned Playwright image) for Chromium
   only, to avoid cross-OS font noise.
 
-## 7. Proposed folder structure
+## 7. Folder structure
 
-```
-.
-├── .github/workflows/
-│   ├── pr.yml                  # lint, typecheck, @smoke on Chromium
-│   └── regression.yml          # push to main + nightly: sharded full run, merged report → Pages
-├── docs/
-│   ├── TEST-PLAN.md
-│   ├── DECISIONS.md            # ADRs
-│   └── FINDINGS.md             # defect reports
-├── src/
-│   ├── core/
-│   │   ├── base.page.ts        # abstract BasePage: page, abstract path, goto(), expectLoaded()
-│   │   ├── config.ts           # typed .env loader (zod-validated)
-│   │   ├── fixtures/
-│   │   │   ├── network-guard.ts    # aborts unmocked writes + trackers; fails on leaks
-│   │   │   ├── console-errors.ts   # collects console/page errors for assertions
-│   │   │   └── index.ts            # merged base test (test.extend / mergeTests)
-│   │   ├── helpers/
-│   │   │   ├── a11y.ts         # axe wrapper: serious/critical gate + readable report attachment
-│   │   │   ├── links.ts        # sitemap/link status checker with bounded concurrency
-│   │   │   ├── money.ts        # price parsing and sort-order assertions
-│   │   │   ├── perf.ts         # navigation timing / LCP collection
-│   │   │   └── headers.ts      # security/caching header expectations
-│   │   └── data/
-│   │       └── factories.ts    # faker-based form data factories
-│   └── sites/
-│       ├── faithfulness/
-│       │   ├── components/     # Header, Footer, ContactForm, ZipChecker, FaqAccordion, MobileNav
-│       │   ├── pages/          # FaithfulnessPage (site base) → HomePage, ContactPage, ServicesPage,
-│       │   │                   #   ServiceDetailPage, ServiceAreaPage, RequestAssessmentPage,
-│       │   │                   #   ReferPage, CareersPage, PayingForCarePage, AuthPage
-│       │   ├── data/           # nav.ts, services.ts, service-areas.ts, contact-info.ts
-│       │   ├── mocks/          # serverFn submit mocks (success / failure)
-│       │   └── fixtures.ts     # test.extend providing page objects
-│       └── afrishop/
-│           ├── components/     # Header, Footer, ProductCard, ProductGrid, SortSelect, Pagination,
-│           │                   #   CartLineItem, OrderSummary, CheckoutForm
-│           ├── pages/          # AfrishopPage (site base) → HomePage, SearchResultsPage, CategoryPage,
-│           │                   #   HotProductsPage, ProductPage, CartPage, CheckoutPage,
-│           │                   #   TrackOrderPage, PasteLinkPage, AccountPage
-│           ├── data/           # strings.fr.ts, nav.ts, cart-seeds.ts
-│           ├── mocks/          # auth-service / checkout mocks, price-calc mock
-│           └── fixtures.ts
-├── tests/
-│   ├── faithfulness/{ui,a11y,visual,api}/
-│   └── afrishop/{ui,a11y,visual,api}/
-├── playwright.config.ts        # projects: {site} × {chromium, firefox, webkit, iphone-13} + {site}-api
-├── .env.example
-├── eslint.config.mjs, .prettierrc, tsconfig.json, package.json
-└── README.md
-```
+The implemented layout is documented in the [README](../README.md#project-structure). Relative to the proposal it
+adds `src/core/network/` (guard and read-only request proxy), `tests/*/mobile` and `tests/*/perf` folders, a
+`tests/framework` self-test project, and `docker-compose.yml` for rendering visual baselines in the CI image.
 
-**Project matrix:** each site gets four browser projects (Chromium, Firefox, WebKit,
-iPhone 13) plus one browser-less `api` project, so API and header tests don't run four
-times. Visual and performance tests are restricted to Chromium via tag `grep`.
+## 8. Decisions (resolved)
 
-## 8. Decisions needed from you
+1. **Read-only POST allow-list:** approved for the four AfriShop endpoints, after verifying their request and
+   response bodies (ADR-004). Matched against the full URL; everything else fails closed.
+2. **Checkout depth:** approved. The journey covers discovery → product → cart → checkout validation → mocked
+   registration (success, existing account, rejection, outage). No real registration, payment or order is possible.
+3. **Findings:** documented as observations first, with evidence, without claiming impact or root cause that wasn't
+   verified (ADR-007).
 
-1. **Read-only POST allow-list (AfriShop).** Search and pricing use POST endpoints
-   (`search-intent`, `catalog-service?action=tabs`, `rpc/compute_display_prices_titled`,
-   `rpc/get_active_providers`). Search doesn't work without them. The plan is to let
-   these through and block everything else. OK?
-2. **Checkout depth.** Because guest checkout first calls `auth-service` `register`, the
-   mocked journey will stop at "payload asserted and the app advances (or shows the
-   error) on the mocked response". Mocking the Stripe step is out of scope. OK?
-3. **Severity of F-FH-01.** This may be a product decision you already know
-   about. Should it be reported as defects or as observations?
+## 9. How implementation refined the plan
+
+- **Tagging:** every test is `@regression`, and P1 tests are also `@smoke`, so regression genuinely includes smoke.
+  `@mocked` marks tests whose action is answered by a mock (ADR-010).
+- **Faithfulness forms:** server functions use the seroval wire format with a `{ ok, error }` contract. Mocks
+  reproduce it, and tests decode the real payload (ADR-005). A conditional rule was found and tested: email becomes
+  required when it is the preferred contact method.
+- **Hydration:** SSR headings appear before React is interactive, so page objects wait for TanStack hydration, plus
+  per-control hydration for the ZIP widget on WebKit (ADR-008).
+- **AfriShop search:** shows a zero counter while loading and degrades under bursts (F-AS-12, F-AS-16). Waits and
+  diagnostics were designed around both, and the number of live searches was kept small.
+- **Soft 404s:** status-only link checks would always pass on the SPA, so AfriShop's sitemap sweep runs in a browser
+  and detects the 404 view.
+- **Cross-browser:** console and keyboard checks were made engine-neutral (each engine words CSP errors
+  differently; WebKit on macOS reaches links with Option+Tab).
