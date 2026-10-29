@@ -87,8 +87,8 @@ Entries are matched against the full URL, so a single query can be pinned.
 None accepts user or account data. Faithfulness has an empty allow-list: every POST there is a lead submission.
 
 **Consequences.** A forgotten mock produces a red test with the blocked request attached, never a real submission.
-The guard has already caught two real cases: Stripe.js posting CSP reports from its iframe, and the guest-checkout
-registration call. The cost is maintaining the tracker and allow-lists as the sites evolve.
+The guard has already caught three real cases: Stripe.js posting CSP reports from its iframe, product-view analytics
+inserted into `hot_product_clicks`, and the checkout submission call. The cost is maintaining the tracker and allow-lists as the sites evolve.
 
 ---
 

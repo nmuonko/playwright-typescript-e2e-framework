@@ -15,6 +15,8 @@ export const afrishopPolicy: NetworkPolicy = {
   trackers: [
     /analytics\.tiktok\.com|tiktokw\.us/,
     new RegExp(`^${SUPABASE}/functions/v1/tiktok-events`),
+    // First-party product-view analytics (inserts a row per product seen on /hot-products).
+    new RegExp(`^${SUPABASE}/rest/v1/hot_product_clicks`),
     /connect\.facebook\.net|facebook\.com\/tr/,
     /googletagmanager\.com|google-analytics\.com|doubleclick\.net/,
     // Stripe.js telemetry and its CSP violation reports (not payment calls).
