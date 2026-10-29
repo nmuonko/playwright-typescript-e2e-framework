@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 /**
  * Root of the page-object hierarchy.
@@ -23,4 +23,16 @@ export abstract class BasePage {
 /** Base for reusable widgets composed into pages (header, product card, forms...). */
 export abstract class BaseComponent {
   constructor(readonly page: Page) {}
+}
+
+/**
+ * Resolves once React has attached its event props to the element. Server-rendered controls exist
+ * before their island hydrates; typing into them earlier gets reset when React takes over.
+ */
+export async function waitForReactHydration(locator: Locator): Promise<void> {
+  await expect
+    .poll(() => locator.evaluate((el) => Object.keys(el).some((key) => key.startsWith('__reactProps$'))), {
+      message: 'element was never hydrated by React',
+    })
+    .toBe(true);
 }

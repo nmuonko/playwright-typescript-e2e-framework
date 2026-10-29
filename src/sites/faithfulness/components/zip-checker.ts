@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { BaseComponent } from '@core/base.page';
+import { BaseComponent, waitForReactHydration } from '@core/base.page';
 
 /** "Where do you need care?" availability widget on the home and service-area pages. */
 export class ZipChecker extends BaseComponent {
@@ -20,6 +20,7 @@ export class ZipChecker extends BaseComponent {
   }
 
   async check(zip: string): Promise<void> {
+    await waitForReactHydration(this.zipInput);
     await this.zipInput.fill(zip);
     await this.checkButton.click();
   }
