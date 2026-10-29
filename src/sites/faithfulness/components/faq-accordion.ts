@@ -15,6 +15,11 @@ export class FaqAccordion extends BaseComponent {
     return this.root.getByRole('button', { name: text });
   }
 
+  /** Answer panel, exposed as a region labelled by its question. */
+  answer(question: string): Locator {
+    return this.root.getByRole('region', { name: question });
+  }
+
   questions(): Locator {
     return this.root.getByRole('heading', { level: 3 }).getByRole('button');
   }

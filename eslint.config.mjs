@@ -44,6 +44,8 @@ export default tseslint.config(
       'playwright/no-force-option': 'error',
       'playwright/no-skipped-test': ['error', { allowConditional: true }],
       'playwright/expect-expect': ['error', { assertFunctionPatterns: ['^expect', '\\.expect[A-Z]'] }],
+      // False positives on page-object methods such as contactPage.goto().
+      'playwright/prefer-locator': 'off',
       'playwright/no-conditional-in-test': 'off',
       'playwright/no-conditional-expect': 'off',
     },
