@@ -21,7 +21,7 @@ export const issues = {
   searchFailsOpen: {
     id: 'F-AS-12',
     title:
-      'Under a burst of searches, catalog-search returns fast empty HTTP 200 responses instead of an error',
+      'Under sustained traffic, catalog endpoints return fast empty HTTP 200 responses instead of an error',
   },
   settings406: {
     id: 'F-AS-07',
@@ -31,12 +31,18 @@ export const issues = {
   resourcesBlockedByCsp: {
     id: 'F-AS-08',
     title: 'The meta CSP blocks resources the page itself requests (Google Fonts, TikTok IPv6 endpoint)',
-    consolePattern: /(fonts\.googleapis\.com|tiktokw\.us).*Content Security Policy/s,
+    consolePattern:
+      /(?=[\s\S]*(fonts\.googleapis\.com|tiktokw\.us))(?=[\s\S]*(Content[- ]Security[- ]Policy|style-src|connect-src))/,
   },
   metaCspDirectiveIgnored: {
     id: 'F-AS-08',
     title: 'The meta CSP also triggers a browser console notice on every page',
     consolePattern: /is ignored when delivered via (a <meta>|an HTML meta) element/,
+  },
+  trackingCookiesRejected: {
+    id: 'F-AS-15',
+    title: 'Firefox rejects the _fbp / _tt_enable_cookie tracking cookies for an invalid domain',
+    consolePattern: /Cookie “(_fbp|_tt_enable_cookie)” has been rejected for invalid domain/,
   },
   colorContrast: {
     id: 'F-AS-13',

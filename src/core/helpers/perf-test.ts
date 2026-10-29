@@ -3,7 +3,11 @@ import { config } from '../config';
 import { installVitalsObserver, readTimings, type PageTimings } from './perf';
 
 /** Loads `path` once, records navigation timing + Core Web Vitals, attaches them, and checks budgets. */
-export async function expectPageLoadWithinBudget(page: Page, testInfo: TestInfo, path: string): Promise<PageTimings> {
+export async function expectPageLoadWithinBudget(
+  page: Page,
+  testInfo: TestInfo,
+  path: string,
+): Promise<PageTimings> {
   await installVitalsObserver(page);
   await page.goto(path, { waitUntil: 'load' });
   // LCP is finalised on first input or hide; reading after load is the standard lab approximation.

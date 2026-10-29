@@ -4,7 +4,8 @@ export const issues = {
   gtagBlockedByCsp: {
     id: 'F-FH-01',
     title: 'Google Ads gtag.js is referenced in every page but blocked by the site’s own CSP',
-    consolePattern: /googletagmanager\.com\/gtag\/js.*Content Security Policy/s,
+    consolePattern:
+      /(?=[\s\S]*googletagmanager\.com\/gtag\/js)(?=[\s\S]*(Content[- ]Security[- ]Policy|script-src))/,
   },
   servicesMenuKeyboard: {
     id: 'F-FH-02',

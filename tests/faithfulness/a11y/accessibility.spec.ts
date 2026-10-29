@@ -33,13 +33,19 @@ test.describe('Faithfulness accessibility', { tag: ['@a11y', '@regression'] }, (
     });
   }
 
-  test('skip link moves keyboard focus past the header into the main content', async ({ page, homePage }) => {
+  test('skip link moves keyboard focus past the header into the main content', async ({
+    page,
+    homePage,
+    browserName,
+  }) => {
+    // WebKit on macOS only tabs to links with Option+Tab (system "keyboard navigation" setting).
+    const tab = browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab';
     await homePage.goto();
-    await page.keyboard.press('Tab');
+    await page.keyboard.press(tab);
     await expect(homePage.skipLink).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(page).toHaveURL(/#main-content$/);
-    await page.keyboard.press('Tab');
+    await page.keyboard.press(tab);
     const focusedInMain = page.getByRole('main').locator(':focus');
     await expect(focusedInMain).toHaveCount(1);
   });

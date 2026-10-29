@@ -1,4 +1,5 @@
-import { annotateKnownIssue, expectFailureFrom } from '@core/known-issues';
+import { expectNoUnexpectedConsoleErrors } from '@core/helpers/console';
+import { expectFailureFrom } from '@core/known-issues';
 import { test, expect } from '@faithfulness/fixtures';
 import { issues } from '@faithfulness/data/known-issues';
 import { contactInfo, home, keyPages, mainNav } from '@faithfulness/data/site';
@@ -36,13 +37,18 @@ test.describe('Faithfulness smoke', { tag: ['@smoke', '@regression'] }, () => {
     await expect(homePage.footer.root).toContainText(contactInfo.address);
   });
 
-  test('key pages log no unexpected console errors', async ({ page, consoleErrors }, testInfo) => {
-    for (const path of keyPages) {
-      await page.goto(path, { waitUntil: 'load' });
-      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    }
-    const known = consoleErrors.filter((e) => issues.gtagBlockedByCsp.consolePattern.test(e.text));
-    if (known.length) annotateKnownIssue(testInfo, issues.gtagBlockedByCsp, `${known.length} console errors`);
-    expect(consoleErrors.filter((e) => !known.includes(e))).toEqual([]);
+  test('key pages log no unexpected console errors', async ({ context, networkGuard }, testInfo) => {
+    await expectNoUnexpectedConsoleErrors(
+      {
+        context,
+        guard: networkGuard,
+        paths: keyPages,
+        waitUntilLoaded: async (page) => {
+          await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+        },
+        knownIssues: [issues.gtagBlockedByCsp],
+      },
+      testInfo,
+    );
   });
 });

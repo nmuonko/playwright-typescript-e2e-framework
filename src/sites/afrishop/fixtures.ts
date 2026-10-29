@@ -48,13 +48,9 @@ export const test = base.extend<AfrishopFixtures>({
       await use(responses);
       if (testInfo.status !== testInfo.expectedStatus) {
         // Separate a known backend behaviour from a genuine regression in the report.
-        const empty = responses.filter((r) => r.endpoint.includes('catalog-search') && r.items === 0);
+        const empty = responses.filter((r) => r.items === 0);
         if (empty.length) {
-          annotateKnownIssue(
-            testInfo,
-            issues.searchFailsOpen,
-            `${empty.length} empty catalog-search responses`,
-          );
+          annotateKnownIssue(testInfo, issues.searchFailsOpen, `${empty.length} empty catalog responses`);
         }
         await testInfo.attach('catalog-responses.json', {
           contentType: 'application/json',

@@ -1,4 +1,4 @@
-import { test as base, expect, type ConsoleMessage } from '@playwright/test';
+import { test as base, expect, type ConsoleMessage, type Page } from '@playwright/test';
 import { NetworkGuard, type NetworkPolicy } from '../network/network-guard';
 import { readOnlyRequest } from '../network/safe-request';
 
@@ -17,6 +17,24 @@ export interface CoreFixtures {
 }
 
 const BLOCKED_BY_GUARD = /ERR_BLOCKED_BY_CLIENT|blocked by client|NS_ERROR_FAILURE|Load failed/i;
+
+/**
+ * Collects console errors and uncaught exceptions for one page, ignoring messages that only exist
+ * because the network guard aborted a request (each engine words those differently).
+ */
+export function watchConsoleErrors(page: Page, guard: NetworkGuard): ConsoleEntry[] {
+  const entries: ConsoleEntry[] = [];
+  const causedByGuard = (text: string, location: string): boolean =>
+    BLOCKED_BY_GUARD.test(text) ||
+    guard.abortedUrls.has(location) ||
+    [...guard.abortedUrls].some((url) => text.includes(url.split('?')[0] ?? url));
+  page.on('console', (message: ConsoleMessage) => {
+    if (message.type() !== 'error' || causedByGuard(message.text(), message.location().url)) return;
+    entries.push({ type: 'console', text: message.text(), url: page.url() });
+  });
+  page.on('pageerror', (error) => entries.push({ type: 'pageerror', text: error.message, url: page.url() }));
+  return entries;
+}
 
 export const test = base.extend<CoreFixtures>({
   networkPolicy: [{ name: 'default', readOnlyPosts: [], trackers: [] }, { option: true }],
@@ -45,19 +63,7 @@ export const test = base.extend<CoreFixtures>({
   },
 
   consoleErrors: async ({ page, networkGuard }, use) => {
-    const entries: ConsoleEntry[] = [];
-    const onConsole = (message: ConsoleMessage): void => {
-      if (message.type() !== 'error') return;
-      const location = message.location().url;
-      if (BLOCKED_BY_GUARD.test(message.text()) || networkGuard.abortedUrls.has(location)) return;
-      entries.push({ type: 'console', text: message.text(), url: page.url() });
-    };
-    page.on('console', onConsole);
-    page.on('pageerror', (error) =>
-      entries.push({ type: 'pageerror', text: error.message, url: page.url() }),
-    );
-    await use(entries);
-    page.off('console', onConsole);
+    await use(watchConsoleErrors(page, networkGuard));
   },
 
   // API tests talk to production directly; only GET/HEAD are allowed through.

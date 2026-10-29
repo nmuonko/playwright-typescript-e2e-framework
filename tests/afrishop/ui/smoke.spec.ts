@@ -1,4 +1,4 @@
-import { annotateKnownIssue } from '@core/known-issues';
+import { expectNoUnexpectedConsoleErrors } from '@core/helpers/console';
 import { test, expect } from '@afrishop/fixtures';
 import { issues } from '@afrishop/data/known-issues';
 import { SearchResultsPage } from '@afrishop/pages/catalog.pages';
@@ -43,22 +43,23 @@ test.describe('AfriShop smoke', { tag: ['@smoke', '@regression'] }, () => {
     await expect(cartPage.line(title).quantity).toHaveText('1');
   });
 
-  test('key pages log no unexpected console errors', async ({ page, consoleErrors }, testInfo) => {
-    for (const path of ['/', '/search?q=samsung', '/cart', '/checkout', '/track-order']) {
-      await page.goto(path, { waitUntil: 'load' });
-      await expect(
-        page
-          .getByRole('banner')
-          .or(page.getByRole('heading', { level: 1 }))
-          .first(),
-      ).toBeVisible();
-    }
-    const known = [issues.settings406, issues.resourcesBlockedByCsp, issues.metaCspDirectiveIgnored];
-    for (const issue of known) {
-      const hits = consoleErrors.filter((e) => issue.consolePattern.test(e.text));
-      if (hits.length) annotateKnownIssue(testInfo, issue, `${hits.length} console errors`);
-    }
-    const unexpected = consoleErrors.filter((e) => !known.some((issue) => issue.consolePattern.test(e.text)));
-    expect(unexpected).toEqual([]);
+  test('key pages log no unexpected console errors', async ({ context, networkGuard }, testInfo) => {
+    await expectNoUnexpectedConsoleErrors(
+      {
+        context,
+        guard: networkGuard,
+        paths: ['/', '/search?q=samsung', '/cart', '/checkout', '/track-order'],
+        waitUntilLoaded: async (page) => {
+          await expect(page.getByRole('heading').first()).toBeVisible();
+        },
+        knownIssues: [
+          issues.settings406,
+          issues.resourcesBlockedByCsp,
+          issues.metaCspDirectiveIgnored,
+          issues.trackingCookiesRejected,
+        ],
+      },
+      testInfo,
+    );
   });
 });
