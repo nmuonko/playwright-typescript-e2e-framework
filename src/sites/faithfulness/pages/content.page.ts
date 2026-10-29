@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import type { NavTarget, ServiceArea } from '../data/site';
+import type { ServiceArea } from '../data/site';
 import { ConsultationForm } from '../components/consultation-form';
 import { FaithfulnessPage } from './faithfulness.page';
 
@@ -8,7 +8,7 @@ export class ContentPage extends FaithfulnessPage {
   readonly path: string;
   protected readonly h1: string | RegExp;
 
-  constructor(page: Page, target: Pick<NavTarget, 'path' | 'h1'>) {
+  constructor(page: Page, target: { readonly path: string; readonly h1: string | RegExp }) {
     super(page);
     this.path = target.path;
     this.h1 = target.h1;

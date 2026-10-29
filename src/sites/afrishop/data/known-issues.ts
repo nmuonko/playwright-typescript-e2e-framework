@@ -38,4 +38,12 @@ export const issues = {
     title: 'The meta CSP also triggers a browser console notice on every page',
     consolePattern: /is ignored when delivered via (a <meta>|an HTML meta) element/,
   },
+  colorContrast: {
+    id: 'F-AS-13',
+    title: 'Prices, footer and helper text fail WCAG AA colour contrast',
+  },
+  targetSizeAndLabels: {
+    id: 'F-AS-14',
+    title: 'Touch targets below 24px and visible labels that differ from accessible names',
+  },
 } as const satisfies Record<string, KnownIssue>;

@@ -14,4 +14,13 @@ export const issues = {
     id: 'F-FH-03',
     title: '/refer renders without the site header, footer and <main> landmark (skip link has no target)',
   },
+  listMarkup: {
+    id: 'F-FH-04',
+    title:
+      'Invalid list markup: <dl>/<ul>/<ol> contain elements other than dt/dd/li (axe definition-list, list, listitem)',
+  },
+  pricingContrast: {
+    id: 'F-FH-05',
+    title: 'Step numerals on /paying-for-care fail WCAG AA colour contrast',
+  },
 } as const satisfies Record<string, KnownIssue>;
