@@ -25,7 +25,8 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "report": "playwright show-report",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:visual:docker": "docker compose run --rm playwright"
   },
   "lint-staged": {
     "*.ts": [

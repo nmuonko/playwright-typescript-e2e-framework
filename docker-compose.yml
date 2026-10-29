@@ -1,0 +1,26 @@
+# Runs the suite inside the same pinned Linux image CI uses, so visual baselines match byte-for-byte.
+#   npm run test:visual:docker    -> compare against committed baselines
+#   npm run visual:update         -> regenerate baselines after an intentional UI change
+services:
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.64.1-noble
+    platform: linux/amd64
+    working_dir: /work
+    environment:
+      - CI=true
+    volumes:
+      - .:/work
+      # Linux-native node_modules, kept separate from the host's.
+      - node_modules:/work/node_modules
+    ipc: host
+    entrypoint: ['/bin/bash', '-c']
+    command: ['npm ci --ignore-scripts --no-audit --no-fund && npx playwright test --grep @visual']
+
+  visual-update:
+    extends: playwright
+    environment:
+      - CI=false
+    command: ['npm ci --ignore-scripts --no-audit --no-fund && npx playwright test --grep @visual --update-snapshots=all']
+
+volumes:
+  node_modules:
