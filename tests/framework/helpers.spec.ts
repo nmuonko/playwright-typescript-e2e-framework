@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { expectSorted, parsePrice, roundCents } from '@core/helpers/money';
 import { parseRobots, parseSitemap } from '@core/helpers/http';
+import { cspAllows, hasFramingProtection, parseCsp } from '@core/helpers/headers';
 import { decode, decodeServerFnPayload, encode, encodeServerFnResult } from '@faithfulness/mocks/seroval';
 
 test.describe('framework helpers', { tag: ['@framework', '@regression'] }, () => {
@@ -54,5 +55,19 @@ test.describe('framework helpers', { tag: ['@framework', '@regression'] }, () =>
     );
     expect(robots.get('*')).toEqual({ allow: ['/'], disallow: ['/checkout'] });
     expect(robots.get('Googlebot')?.disallow).toEqual([]);
+  });
+
+  test('CSP helpers evaluate sources and framing the way browsers do', () => {
+    const csp = parseCsp(
+      "default-src 'self'; script-src 'self' https://js.stripe.com; frame-ancestors 'none'",
+    );
+    const scripts = csp.get('script-src') ?? [];
+    expect(cspAllows(scripts, '/assets/app.js', 'https://site.test')).toBe(true);
+    expect(cspAllows(scripts, 'https://js.stripe.com/v3', 'https://site.test')).toBe(true);
+    expect(cspAllows(scripts, 'https://www.googletagmanager.com/gtag/js', 'https://site.test')).toBe(false);
+    expect(cspAllows(['https://*.supabase.co'], 'https://abc.supabase.co/x', 'https://site.test')).toBe(true);
+    expect(hasFramingProtection({ 'x-frame-options': 'DENY' })).toBe(true);
+    expect(hasFramingProtection({ 'content-security-policy': "frame-ancestors 'none'" })).toBe(true);
+    expect(hasFramingProtection({})).toBe(false);
   });
 });
