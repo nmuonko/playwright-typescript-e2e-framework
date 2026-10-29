@@ -42,7 +42,7 @@ test.describe('Catalogue browsing', { tag: '@regression' }, () => {
     await expect(category.grid.cards).toHaveCount(await category.shownCount());
   });
 
-  test.describe('search', () => {
+  test.describe('search', { tag: '@live-search' }, () => {
     test('results are relevant to the query', async ({ page }) => {
       const search = new SearchResultsPage(page, 'iphone');
       await search.goto();
@@ -96,19 +96,23 @@ test.describe('Catalogue browsing', { tag: '@regression' }, () => {
       },
     );
 
-    test('similar products are offered on the detail page', async ({ page, homePage }) => {
-      await homePage.goto();
-      await homePage.grid.card(0).root.click();
-      const similar = page
-        .getByRole('main')
-        .locator('section, div')
-        .filter({
-          has: page.getByRole('heading', { level: 2, name: 'Produits similaires' }),
+    test(
+      'similar products are offered on the detail page',
+      { tag: '@live-search' },
+      async ({ page, homePage }) => {
+        await homePage.goto();
+        await homePage.grid.card(0).root.click();
+        const similar = page
+          .getByRole('main')
+          .locator('section, div')
+          .filter({
+            has: page.getByRole('heading', { level: 2, name: 'Produits similaires' }),
+          });
+        await expect(new ProductGrid(page, similar.last()).cards.first()).toBeVisible({
+          timeout: CATALOG_TIMEOUT_MS,
         });
-      await expect(new ProductGrid(page, similar.last()).cards.first()).toBeVisible({
-        timeout: CATALOG_TIMEOUT_MS,
-      });
-    });
+      },
+    );
 
     test('an unknown product shows a clear not-found message', async ({ page }, testInfo) => {
       expectFailureFrom(testInfo, issues.soft404);

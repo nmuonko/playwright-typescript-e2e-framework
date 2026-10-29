@@ -202,8 +202,9 @@ the action under test is answered by a mock. `npx playwright test --grep @mocked
   overlap.
 - Performance checks are a single cold load per page on Chromium: a lab signal, not a load test.
 - Trackers are blocked, so automated traffic never shows up in ad or analytics reports.
-- AfriShop's search appears to degrade under bursts (F-AS-12). The suite keeps live searches to a handful, and the
-  diagnostics fixture labels the resulting failures.
+- AfriShop's search appears to degrade under bursts (F-AS-12). Tests that hit live search are tagged `@live-search`
+  and run on Chromium and mobile only. Search ranking is server-side, so extra engines add load, not coverage. The
+  diagnostics fixture labels any failure caused by empty catalogue responses.
 
 ---
 

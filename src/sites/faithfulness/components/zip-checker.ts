@@ -19,9 +19,14 @@ export class ZipChecker extends BaseComponent {
     this.outOfAreaMessage = page.getByRole('main').getByText(/outside our current core coverage map/);
   }
 
-  async check(zip: string): Promise<void> {
+  /** Types into the field once it is interactive (see waitForReactHydration). */
+  async enter(zip: string): Promise<void> {
     await waitForReactHydration(this.zipInput);
     await this.zipInput.fill(zip);
+  }
+
+  async check(zip: string): Promise<void> {
+    await this.enter(zip);
     await this.checkButton.click();
   }
 }

@@ -13,7 +13,7 @@ test.describe('AfriShop smoke', { tag: ['@smoke', '@regression'] }, () => {
     for (const price of prices) expect(price).toBeGreaterThan(0);
   });
 
-  test('search returns products matching the query', async ({ page, homePage }) => {
+  test('search returns products matching the query', { tag: '@live-search' }, async ({ page, homePage }) => {
     await homePage.goto();
     await homePage.header.search('iphone');
     const results = new SearchResultsPage(page, 'iphone');

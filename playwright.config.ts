@@ -22,6 +22,9 @@ const sites: readonly Site[] = [
 // so those suites run only in the Chromium project.
 const CHROMIUM_ONLY = ['**/visual/**', '**/perf/**'];
 const NOT_BROWSER = ['**/api/**', '**/mobile/**'];
+// Search ranking is server-side and AfriShop's search degrades under bursts (F-AS-12), so tests that hit live
+// search run on Chromium and mobile only; Firefox/WebKit keep every other journey.
+const LIVE_SEARCH = /@live-search/;
 
 function projectsFor(site: Site): PlaywrightTestProject[] {
   const shared = { baseURL: site.baseURL, locale: site.locale, timezoneId: site.timezoneId };
@@ -37,12 +40,14 @@ function projectsFor(site: Site): PlaywrightTestProject[] {
       name: `${site.name}-firefox`,
       testDir,
       testIgnore: [...NOT_BROWSER, ...CHROMIUM_ONLY],
+      grepInvert: LIVE_SEARCH,
       use: { ...devices['Desktop Firefox'], ...shared },
     },
     {
       name: `${site.name}-webkit`,
       testDir,
       testIgnore: [...NOT_BROWSER, ...CHROMIUM_ONLY],
+      grepInvert: LIVE_SEARCH,
       use: { ...devices['Desktop Safari'], ...shared },
     },
     {

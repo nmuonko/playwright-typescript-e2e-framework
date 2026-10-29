@@ -31,7 +31,7 @@ test.describe('Coverage: ZIP checker and service areas', { tag: '@regression' },
   for (const { typed, value } of sanitised) {
     test(`ZIP field keeps digits only ("${typed}" -> "${value}")`, async ({ homePage }) => {
       await homePage.goto();
-      await homePage.zipChecker.zipInput.fill(typed);
+      await homePage.zipChecker.enter(typed);
       await expect(homePage.zipChecker.zipInput).toHaveValue(value);
     });
   }

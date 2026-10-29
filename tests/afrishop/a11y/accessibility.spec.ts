@@ -20,10 +20,14 @@ test.describe('AfriShop accessibility', { tag: ['@a11y', '@regression'] }, () =>
     await expectNoSeriousA11yViolations(page, testInfo, { knownIssues: known });
   });
 
-  test('search results have no new serious or critical axe violations', async ({ page }, testInfo) => {
-    await new SearchResultsPage(page, 'iphone').goto();
-    await expectNoSeriousA11yViolations(page, testInfo, { knownIssues: known });
-  });
+  test(
+    'search results have no new serious or critical axe violations',
+    { tag: '@live-search' },
+    async ({ page }, testInfo) => {
+      await new SearchResultsPage(page, 'iphone').goto();
+      await expectNoSeriousA11yViolations(page, testInfo, { knownIssues: known });
+    },
+  );
 
   test('product page has no new serious or critical axe violations', async ({ page }, testInfo) => {
     await new ProductPage(page, '/product/amazon/B088NHSZV6').goto();
@@ -56,14 +60,18 @@ test.describe('AfriShop accessibility', { tag: ['@a11y', '@regression'] }, () =>
     await expect(homePage.header.menuButton).toHaveAccessibleName(/menu/i);
   });
 
-  test('search can be performed with the keyboard alone', async ({ page, homePage }) => {
-    await homePage.goto();
-    await homePage.header.searchInput.focus();
-    await page.keyboard.type('samsung');
-    await page.keyboard.press('Enter');
-    await expect(page).toHaveURL(/\/search\?q=samsung/);
-    await expect(new SearchResultsPage(page, 'samsung').heading).toBeVisible();
-  });
+  test(
+    'search can be performed with the keyboard alone',
+    { tag: '@live-search' },
+    async ({ page, homePage }) => {
+      await homePage.goto();
+      await homePage.header.searchInput.focus();
+      await page.keyboard.type('samsung');
+      await page.keyboard.press('Enter');
+      await expect(page).toHaveURL(/\/search\?q=samsung/);
+      await expect(new SearchResultsPage(page, 'samsung').heading).toBeVisible();
+    },
+  );
 
   test('home sort menu is operable with the keyboard', async ({ page, homePage }) => {
     await homePage.goto();
