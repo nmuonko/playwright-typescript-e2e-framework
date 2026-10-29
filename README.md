@@ -20,11 +20,11 @@ search results that come back empty under load. See [docs/FINDINGS.md](docs/FIND
 
 |                    |                                                                                     |
 | ------------------ | ----------------------------------------------------------------------------------- |
-| Unique test cases  | 157 (357 executions across 11 projects)                                             |
+| Unique test cases  | 157 (343 executions across 11 projects)                                             |
 | Projects           | 2 sites × {Chromium, Firefox, WebKit, iPhone 13, API} + framework self-tests        |
-| Smoke subset       | 88 executions (`@smoke`), run on every pull request                                 |
+| Smoke subset       | 86 executions (`@smoke`); the Chromium + API part runs on every PR                  |
 | Mocked submissions | 32 executions (`@mocked`): 4 lead forms + guest checkout, success and failure paths |
-| Accessibility      | 63 executions: axe WCAG 2.2 AA scans and keyboard tests                             |
+| Accessibility      | 59 executions: axe WCAG 2.2 AA scans and keyboard tests                             |
 | Visual baselines   | 6, rendered in the CI Docker image and committed                                    |
 | Findings           | 20 observations with evidence, 8 tracked by expected-failure tests                  |
 
@@ -137,6 +137,8 @@ Docker commands instead.
   baselines. CI uses `updateSnapshots: 'none'`, so it can only compare.
 - Retries are 2 in CI only. Traces and video are kept on first retry and uploaded as artifacts on failure.
 - `concurrency` groups stop overlapping regression runs against production.
+- Tests that hit AfriShop's live search (`@live-search`) run on Chromium and mobile only, to keep burst load low
+  (see F-AS-12).
 
 ## Test strategy
 
