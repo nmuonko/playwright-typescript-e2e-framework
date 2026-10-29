@@ -20,7 +20,10 @@ services:
     extends: playwright
     environment:
       - CI=false
-    command: ['npm ci --ignore-scripts --no-audit --no-fund && npx playwright test --grep @visual --update-snapshots=all']
+    command:
+      [
+        'npm ci --ignore-scripts --no-audit --no-fund && npx playwright test --grep @visual --update-snapshots=all',
+      ]
 
 volumes:
   node_modules:
