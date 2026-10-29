@@ -9,6 +9,9 @@ test.describe('framework helpers', { tag: ['@framework', '@regression'] }, () =>
     expect(parsePrice('Total $246.00')).toBe(246);
     expect(parsePrice('450 $')).toBe(450);
     expect(parsePrice('$13,109.84')).toBe(13109.84);
+    // Regression: ungrouped four-digit prices were once truncated to their first three digits.
+    expect(parsePrice('$1239')).toBe(1239);
+    expect(parsePrice('118\u202f360 produits')).toBe(118360);
     expect(() => parsePrice('Inclus')).toThrow('No price found');
     expect(roundCents(0.1 + 0.2)).toBe(0.3);
   });

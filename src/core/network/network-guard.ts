@@ -6,7 +6,7 @@ import type { BrowserContext, Request, Route } from '@playwright/test';
  */
 export interface NetworkPolicy {
   readonly name: string;
-  /** POST endpoints verified during exploration to be side-effect free (search, pricing). */
+  /** POST endpoints verified to be side-effect free (search, pricing). Matched against the full URL. */
   readonly readOnlyPosts: readonly RegExp[];
   /** Analytics/ads endpoints. Always aborted so automated runs never skew business metrics. */
   readonly trackers: readonly RegExp[];
@@ -20,6 +20,8 @@ export interface RequestMatcher {
 }
 
 export interface MockResponse {
+  /** Fail the request at the network layer instead of answering it (simulates an unreachable backend). */
+  readonly abort?: boolean;
   readonly status?: number;
   readonly json?: unknown;
   readonly body?: string;
@@ -123,6 +125,7 @@ export class NetworkGuard {
     if (mock) {
       mock.record(request);
       const response = typeof mock.response === 'function' ? mock.response(request) : mock.response;
+      if (response.abort) return route.abort('failed').catch(() => undefined);
       return route
         .fulfill({
           status: response.status ?? 200,
@@ -136,8 +139,8 @@ export class NetworkGuard {
 
     if (SAFE_METHODS.has(method)) return route.continue().catch(() => undefined);
 
-    const path = url.split('?')[0] ?? url;
-    if (method === 'POST' && this.policy.readOnlyPosts.some((pattern) => pattern.test(path))) {
+    // Matched against the full URL so an allow-list entry can pin a specific query (e.g. ?action=tabs).
+    if (method === 'POST' && this.policy.readOnlyPosts.some((pattern) => pattern.test(url))) {
       return route.continue().catch(() => undefined);
     }
 

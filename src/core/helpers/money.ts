@@ -2,7 +2,8 @@ import { expect } from '@playwright/test';
 
 /** Parses "$1,210", "$246.00", "450 $" into a number. Throws on anything else. */
 export function parsePrice(text: string): number {
-  const match = /(\d{1,3}(?:[,\s]\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)/.exec(text.replace(/\u00a0/g, ' '));
+  // Grouped thousands ("1,210", "118 360") first, else a plain run of digits ("1239").
+  const match = /(\d{1,3}(?:[,\s]\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)/.exec(text.replace(/\u00a0/g, ' '));
   if (!match?.[1]) throw new Error(`No price found in "${text}"`);
   return Number(match[1].replace(/[,\s]/g, ''));
 }
