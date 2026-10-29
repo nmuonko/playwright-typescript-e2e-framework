@@ -17,7 +17,8 @@ export const afrishopPolicy: NetworkPolicy = {
     new RegExp(`^${SUPABASE}/functions/v1/tiktok-events`),
     /connect\.facebook\.net|facebook\.com\/tr/,
     /googletagmanager\.com|google-analytics\.com|doubleclick\.net/,
-    /[mr]\.stripe\.com/,
+    // Stripe.js telemetry and its CSP violation reports (not payment calls).
+    /[mqr]\.stripe\.(com|network)/,
     /\/__l5e\/trackevents/,
   ],
 };

@@ -12,6 +12,7 @@ export const faithfulnessPolicy: NetworkPolicy = {
     /connect\.facebook\.net|facebook\.com\/tr/,
     /\/__l5e\/trackevents/,
     /\/cdn-cgi\/rum/,
-    /[mr]\.stripe\.com/,
+    // Stripe.js telemetry and its CSP violation reports (not payment calls).
+    /[mqr]\.stripe\.(com|network)/,
   ],
 };

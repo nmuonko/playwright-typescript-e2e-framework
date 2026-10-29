@@ -24,8 +24,9 @@ export class Header extends BaseComponent {
     this.menuButton = this.root.getByRole('button').filter({ has: page.locator('svg.lucide-menu') });
   }
 
+  /** Submits with Enter: on phones the search button is icon-only and unnamed (F-AS-05). */
   async search(query: string): Promise<void> {
     await this.searchInput.fill(query);
-    await this.searchButton.click();
+    await this.searchInput.press('Enter');
   }
 }
