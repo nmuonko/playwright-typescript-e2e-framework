@@ -94,10 +94,8 @@ test.describe('Faithfulness HTTP contract', { tag: ['@api', '@regression'] }, ()
     ];
     for (const [directive, url] of urls) {
       const sources = csp.get(directive) ?? csp.get('default-src') ?? [];
-      expect(
-        cspAllows(sources, url, config.FAITHFULNESS_BASE_URL),
-        `${directive} must permit ${url}`,
-      ).toBe(true);
+      const permitted = cspAllows(sources, url, config.FAITHFULNESS_BASE_URL);
+      expect(permitted, `${directive} must permit ${url}`).toBe(true);
     }
   });
 });
