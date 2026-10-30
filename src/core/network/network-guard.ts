@@ -69,6 +69,22 @@ export class MockHandle {
 }
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+const CREDENTIAL_KEY = /pass(word)?|secret|token|otp/i;
+
+/**
+ * Masks credential-shaped fields in a JSON request body before it is recorded, so report attachments and
+ * failure messages never carry them. Non-JSON bodies are returned unchanged.
+ */
+export function redactCredentials(postData: string | null): string | null {
+  if (!postData) return postData;
+  try {
+    return JSON.stringify(JSON.parse(postData), (key, value: unknown) =>
+      key && CREDENTIAL_KEY.test(key) && typeof value === 'string' ? '[redacted]' : value,
+    );
+  } catch {
+    return postData;
+  }
+}
 
 /**
  * Fail-closed request firewall for testing against live production sites.
@@ -107,7 +123,7 @@ export class NetworkGuard {
     const request = route.request();
     const method = request.method();
     const url = request.url();
-    const summary: BlockedRequest = { method, url, postData: request.postData() };
+    const summary: BlockedRequest = { method, url, postData: redactCredentials(request.postData()) };
 
     if (this.policy.trackers.some((pattern) => pattern.test(url))) {
       this.abortedUrls.add(url);

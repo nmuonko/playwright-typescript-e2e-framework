@@ -6,6 +6,10 @@ import { issues } from '@afrishop/data/known-issues';
 import { fr } from '@afrishop/data/strings';
 import { mockGuestRegistration, type RegisterPayload } from '@afrishop/mocks/checkout.mock';
 
+// Checkout submissions carry credential fields. Traces record raw request bodies, so they are off for this
+// file and published reports never contain credential-shaped data (the guard's attachment masks them too).
+test.use({ trace: 'off' });
+
 test.describe('Checkout', { tag: '@regression' }, () => {
   const cart = createCart([
     { quantity: 2, priceUsd: 246 },

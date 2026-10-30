@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { NetworkGuard, type NetworkPolicy } from '@core/network/network-guard';
+import { NetworkGuard, redactCredentials, type NetworkPolicy } from '@core/network/network-guard';
 import { readOnlyRequest } from '@core/network/safe-request';
 
 // Self-tests for the safety layer. They use a fake origin served by the guard itself,
@@ -88,6 +88,18 @@ test.describe('NetworkGuard', { tag: ['@framework', '@smoke', '@regression'] }, 
     expect(await send(page, 'https://tracker.test/pixel', 'GET')).toBe('network-error');
     expect(guard.abortedUrls.has('https://tracker.test/pixel')).toBe(true);
     expect(guard.violations).toEqual([]);
+  });
+
+  test('records write attempts with credential fields masked', async ({ page }) => {
+    const guard = new NetworkGuard(policy);
+    await openFakeSite(page, guard);
+    // Field name built at runtime so the report's source snippets never contain a credential literal.
+    const field = 'pass' + 'word';
+    const body = (value: string): string => JSON.stringify({ email: 'a@example.com', [field]: value });
+    await send(page, `${ORIGIN}/api/register`, 'POST', body('hunter2-Secret'));
+    expect(guard.writeAttempts.map((attempt) => attempt.postData)).toEqual([body('[redacted]')]);
+    expect(guard.describeViolations()).not.toContain('hunter2');
+    expect(redactCredentials('not json')).toBe('not json');
   });
 
   test('waitForRequest times out with a descriptive error when the mock is never hit', async () => {

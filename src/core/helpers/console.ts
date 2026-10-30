@@ -32,14 +32,19 @@ export async function expectNoUnexpectedConsoleErrors(
 
   const isKnown = (entry: ConsoleEntry): KnownIssue | undefined =>
     sweep.knownIssues.find((issue) => issue.consolePattern?.test(entry.text));
+  const knownIssueCounts: Record<string, number> = {};
   for (const issue of sweep.knownIssues) {
     const hits = collected.filter((entry) => isKnown(entry) === issue).length;
-    if (hits) annotateKnownIssue(testInfo, issue, `${hits} console errors`);
+    if (hits) {
+      knownIssueCounts[issue.id] = (knownIssueCounts[issue.id] ?? 0) + hits;
+      annotateKnownIssue(testInfo, issue, `${hits} console errors`);
+    }
   }
   const unexpected = collected.filter((entry) => !isKnown(entry));
+  // Only what needs investigating is attached in full; documented issues are summarised by ID.
   await testInfo.attach('console-errors.json', {
     contentType: 'application/json',
-    body: JSON.stringify(collected, null, 2),
+    body: JSON.stringify({ unexpected, knownIssueCounts }, null, 2),
   });
   expect(unexpected, 'console errors not explained by a documented finding').toEqual([]);
 }
