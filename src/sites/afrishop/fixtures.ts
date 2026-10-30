@@ -7,6 +7,10 @@ import { HomePage } from './pages/catalog.pages';
 import { ProductPage } from './pages/product.page';
 import { CartPage, CheckoutPage, TrackOrderPage } from './pages/purchase.pages';
 
+/** Chromium, Firefox and WebKit wordings for "the host could not be reached". */
+const BACKEND_UNREACHABLE =
+  /ERR_NAME_NOT_RESOLVED|ERR_CONNECTION|ERR_ADDRESS_UNREACHABLE|NS_ERROR_UNKNOWN_HOST|NS_ERROR_CONNECTION_REFUSED|hostname could not be found|Could not connect/i;
+
 interface CatalogResponse {
   readonly endpoint: string;
   readonly status: number;
@@ -29,7 +33,7 @@ interface AfrishopFixtures {
 export const test = base.extend<AfrishopFixtures>({
   networkPolicy: afrishopPolicy,
   catalogDiagnostics: [
-    async ({ page }, use, testInfo) => {
+    async ({ page, context }, use, testInfo) => {
       const responses: CatalogResponse[] = [];
       page.on('requestfinished', (request) => {
         const url = request.url();
@@ -45,7 +49,22 @@ export const test = base.extend<AfrishopFixtures>({
           });
         });
       });
+      // Backend calls that never got a response (DNS or connection failure), as opposed to guard aborts.
+      const unreachable: string[] = [];
+      // Context-wide, so tabs opened by sweeps are covered too.
+      context.on('requestfailed', (request) => {
+        const error = request.failure()?.errorText ?? '';
+        if (/\/(functions|rest)\/v1\//.test(request.url()) && BACKEND_UNREACHABLE.test(error)) {
+          unreachable.push(error);
+        }
+      });
       await use(responses);
+      if (testInfo.status !== testInfo.expectedStatus && unreachable.length) {
+        testInfo.annotations.push({
+          type: 'environment',
+          description: `AfriShop backend unreachable: ${unreachable.length} API requests failed before a response (${unreachable[0] ?? ''})`,
+        });
+      }
       if (testInfo.status !== testInfo.expectedStatus) {
         // Separate a known backend behaviour from a genuine regression in the report.
         const empty = responses.filter((r) => r.items === 0);
