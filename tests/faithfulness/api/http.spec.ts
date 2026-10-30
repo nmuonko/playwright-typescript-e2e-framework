@@ -1,9 +1,7 @@
 import { config } from '@core/config';
 import { checkUrl, checkUrls, parseRobots, parseSitemap } from '@core/helpers/http';
 import { cspAllows, expectBaselineSecurityHeaders, parseCsp } from '@core/helpers/headers';
-import { expectFailureFrom } from '@core/known-issues';
 import { test, expect } from '@core/fixtures';
-import { issues } from '@faithfulness/data/known-issues';
 import { keyPages } from '@faithfulness/data/site';
 
 test.describe('Faithfulness HTTP contract', { tag: ['@api', '@regression'] }, () => {
@@ -81,17 +79,25 @@ test.describe('Faithfulness HTTP contract', { tag: ['@api', '@regression'] }, ()
     expect(broken).toEqual([]);
   });
 
-  test('every external script on the page is permitted by the page’s own CSP', async ({
-    request,
-  }, testInfo) => {
-    expectFailureFrom(testInfo, issues.gtagBlockedByCsp);
+  test('Google Ads script and conversion endpoints are permitted by production CSP', async ({ request }) => {
     const response = await request.get('/');
     const csp = parseCsp(response.headers()['content-security-policy'] ?? '');
-    const scriptSources = csp.get('script-src') ?? csp.get('default-src') ?? [];
-    const scripts = [...(await response.text()).matchAll(/<script[^>]+src="([^"]+)"/g)].map(
-      (m) => m[1] ?? '',
-    );
-    const blocked = scripts.filter((src) => !cspAllows(scriptSources, src, config.FAITHFULNESS_BASE_URL));
-    expect(blocked).toEqual([]);
+    const urls: ReadonlyArray<readonly [string, string]> = [
+      ['script-src', 'https://www.googletagmanager.com/gtag/js?id=AW-18484917918'],
+      ['script-src', 'https://www.googleadservices.com/pagead/conversion_async.js'],
+      ['script-src', 'https://www.gstatic.com/wcm/loader.js'],
+      ['connect-src', 'https://www.google.com/ccm/collect'],
+      ['connect-src', 'https://googleads.g.doubleclick.net/pagead/viewthroughconversion/18484917918/'],
+      ['connect-src', 'https://pagead2.googlesyndication.com/pagead/conversion/18484917918/'],
+      ['connect-src', 'https://ad.doubleclick.net/ccm/s/collect'],
+      ['frame-src', 'https://www.googletagmanager.com/ns.html'],
+    ];
+    for (const [directive, url] of urls) {
+      const sources = csp.get(directive) ?? csp.get('default-src') ?? [];
+      expect(
+        cspAllows(sources, url, config.FAITHFULNESS_BASE_URL),
+        `${directive} must permit ${url}`,
+      ).toBe(true);
+    }
   });
 });
