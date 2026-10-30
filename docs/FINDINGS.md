@@ -19,7 +19,7 @@ Defects and observations found while building and running this suite against the
 
 | ID                  | Site         | Summary                                                               | Classification             | Proposed severity    | Evidence                |
 | ------------------- | ------------ | --------------------------------------------------------------------- | -------------------------- | -------------------- | ----------------------- |
-| [F-FH-01](#f-fh-01) | Faithfulness | Google Ads tag referenced on every page but blocked by the site’s CSP | Verified defect            | Medium               | Automated (`test.fail`) |
+| [F-FH-01](#f-fh-01) | Faithfulness | Google Ads tag referenced on every page but blocked by the site’s CSP | Resolved defect (2026-10-30)            | Medium — resolved               | Automated (production CSP check) |
 | [F-FH-02](#f-fh-02) | Faithfulness | Services menu cannot be opened reliably with the keyboard             | Verified defect            | Medium               | Automated (`test.fail`) |
 | [F-FH-03](#f-fh-03) | Faithfulness | `/refer` renders without the site header, footer and `<main>`         | Verified defect            | Medium               | Automated (`test.fail`) |
 | [F-FH-04](#f-fh-04) | Faithfulness | Invalid list markup on most pages (axe, serious)                      | Verified defect            | Low                  | Automated (annotated)   |
@@ -54,7 +54,7 @@ environment recovers, because shoppers are affected.
 
 ## Faithfulness Home Care
 
-### F-FH-01
+### F-FH-01 — Resolved 2026-10-30
 
 **Google Ads tag is referenced on every page but blocked by the site’s own Content Security Policy**
 
@@ -67,6 +67,8 @@ own CSP` (`tests/faithfulness/api/http.spec.ts`).
 - **What is not proven:** that conversions are being lost. If the business relies on Google Ads conversion tracking
   it is very likely not firing from this site, but that should be confirmed in the Ads console.
 - **Suggested fix:** either add the Google tag origins to `script-src`/`connect-src`, or remove the tag.
+
+**Resolution (2026-10-30):** Faithfulness published an updated production Content Security Policy with explicit Google Ads script/connect/frame origins while preserving frame restrictions and Stripe/Supabase allowances. Lovable reported that the Google tag loaded once in a simulated US visit, and that no tag loaded for Germany without consent. The regression test now checks known runtime Google Ads URLs against live production CSP instead of expecting failure. Actual Google Ads conversion receipt, call duration and conversion-goal status are separate account-side checks. A simulated foreign-region browser also observed one request to `www.google.nl` blocked by CSP; further Google region-domain coverage may be needed.
 
 ### F-FH-02
 
