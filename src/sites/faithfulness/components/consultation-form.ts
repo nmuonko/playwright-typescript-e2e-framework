@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
-import { BaseComponent } from '@core/base.page';
+import { BaseComponent, waitForReactHydration } from '@core/base.page';
 import type { ConsultationRequest } from '../data/forms';
 
 /** Lead form used on /contact and embedded on the home and town pages. */
@@ -56,7 +56,9 @@ export class ConsultationForm extends BaseComponent {
     await this.message.fill(request.message);
   }
 
+  /** Clicks submit once React owns the form; an early click submits natively and shows no validation. */
   async submit(): Promise<void> {
+    await waitForReactHydration(this.submitButton);
     await this.submitButton.click();
   }
 
