@@ -103,10 +103,11 @@ In CI the same failure would show:
 - the failure on the published Pages report.
 
 A second, real example to mention: **environment vs regression.** On 2026-10-30, AfriShop's backend API hostname
-stopped resolving (NXDOMAIN). Product grids, search and cart pricing failed for every visitor. The AfriShop fixture
-saw `net::ERR_NAME_NOT_RESOLVED` on API requests and annotated each failure "AfriShop backend unreachable", and the
-run summary counts these failures as _env._ The run stays red, because shoppers are affected, but nobody wastes
-time debugging selectors.
+stopped resolving (NXDOMAIN). Product grids, search and cart pricing failed for every visitor. When a test fails
+after backend requests failed, the AfriShop fixture checks from Node whether the API host resolves. Here it didn't,
+so it annotated each failure "AfriShop backend unreachable". This works on every engine; Firefox, for example,
+reports the failed request only as a generic `NS_ERROR_DOM_BAD_URI`. The run summary counts these failures as
+_env._ The run stays red, because shoppers are affected, but nobody wastes time debugging selectors.
 
 ## 5. CI/CD and reporting (1 min)
 
