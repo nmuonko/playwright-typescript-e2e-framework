@@ -72,7 +72,10 @@ Supporting controls:
 - Mocks live in an in-memory list read by the one route handler. Registering a mock is synchronous, so it cannot race
   the click that triggers the request.
 - API tests get a `request` fixture wrapped in a proxy that throws on `post/put/patch/delete` and on non-GET `fetch`.
-- The guard has its own self-tests (`tests/framework/network-guard.spec.ts`) on a fake origin.
+- Recorded write attempts mask credential-shaped JSON fields (`password`, `secret`, `token`, `otp`), so report
+  attachments and failure messages never carry them.
+- The guard has its own self-tests (`tests/framework/network-guard.spec.ts`) on a fake origin. In CI they run
+  first, and no production test starts unless they pass.
 
 **Read-only POST allow-list (AfriShop only).** Each entry was verified from captured request and response bodies.
 Entries are matched against the full URL, so a single query can be pinned.
@@ -140,6 +143,9 @@ element.
   while **any new** serious or critical violation or console error still fails. A known issue that disappears is
   annotated `known-issue-not-reproduced`.
 - Observations that aren't clearly bugs get a passing characterisation test plus an annotation.
+- Failures caused by the environment rather than the application (for example the AfriShop backend becoming
+  unreachable) get an `environment` annotation from the site fixture and are counted separately in the run summary.
+  They still fail the run.
 - Every finding is recorded in `docs/FINDINGS.md` as an observation with evidence. Root causes are not claimed.
 
 ---
@@ -197,9 +203,12 @@ the action under test is answered by a mock. `npx playwright test --grep @mocked
 ## ADR-011 · Being a good citizen on production
 
 - Two workers by default (`WORKERS`), and link sweeps with bounded concurrency (`LINK_CHECK_CONCURRENCY=4`).
-- Retries only in CI (2). Traces and video on first retry, screenshots on failure.
-- Regression runs nightly at 06:00 UTC, outside both businesses' hours, with a concurrency group so runs never
-  overlap.
+- One retry, in CI only. Traces and video on first retry, screenshots on failure.
+- Nightly, only the smoke subset runs (Chromium + API, 06:00 UTC). The full cross-browser regression, including
+  sitemap sweeps, visual comparison and performance checks, runs once a week (Sundays 07:00 UTC). Both are outside
+  the businesses' hours.
+- Job-level concurrency allows one job per site at a time across all workflows, so PR, nightly and weekly runs
+  queue instead of stacking up on production.
 - Performance checks are a single cold load per page on Chromium: a lab signal, not a load test.
 - Trackers are blocked, so automated traffic never shows up in ad or analytics reports.
 - AfriShop's search appears to degrade under bursts (F-AS-12). Tests that hit live search are tagged `@live-search`
@@ -217,3 +226,31 @@ the action under test is answered by a mock. `npx playwright test --grep @mocked
   wrong phone number fails a test.
 - The AfriShop cart is seeded through `localStorage` with prices that include cents, so totals arithmetic is
   genuinely exercised and independent of the live catalogue.
+
+---
+
+## ADR-013 · Reporting and publication
+
+**Context.** The reports are public (GitHub Pages) and must show real results, not a curated picture, without
+leaking anything a visitor's browser would not see.
+
+**Decision.**
+
+- Each site runs in its own CI job, so the Actions UI shows pass/fail per application. Blob reports from all jobs
+  are merged into one Playwright HTML report plus JSON and JUnit, and `allure-playwright` results into one Allure 3
+  report. An automatic fixture labels every test with application, suite type and browser.
+- `scripts/report-summary.ts` derives the per-application counts (passed, failed, flaky, known defects, skipped,
+  blocked) from the merged JSON report. They go to the job summary and to the Pages landing page. Nothing is
+  hand-written.
+- The Pages site holds the latest smoke and the latest regression report side by side. Each run uploads its
+  report section as an artifact; the publishing job fetches the other suite's latest section, and Allure history
+  is carried forward the same way, so trends build up without committing reports to the repository.
+- `scripts/scan-report.ts` is a publication gate. It scans every file, including files inside zipped traces and
+  the HTML report's embedded data, for private keys, tokens, privileged JWTs and unmasked credential fields.
+  Failure evidence is only uploaded, and Pages only published, if the scan passes. The gate has its own
+  self-tests.
+- Checkout specs run without traces, because traces record raw request bodies, and those bodies contain
+  credential fields.
+
+**Consequences.** A failing run publishes a red report. That is intended: the Pages site is evidence of what the
+suite actually found.

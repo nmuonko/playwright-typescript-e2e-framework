@@ -1,41 +1,54 @@
 # Findings
 
-Observations made while building and running this suite against the live sites (October 2026).
+Defects and observations found while building and running this suite against the live sites (October 2026).
 
 **How to read this document**
 
-- Every entry is an **observation**: reproduced by an automated test (or, where stated, by manual inspection), with
-  evidence. Severity is a _proposed_ triage level for the site owner, not a confirmed business impact.
+- **Classification.** A _verified defect_ is reproducible and deviates from a stated requirement, a standard (WCAG,
+  HTTP) or the site's own behaviour elsewhere. An _observation_ is reproducible, but whether it is a defect, or what
+  it affects, needs the owner's judgement. _Environment-related_ failures come from conditions outside the
+  application under test (network, DNS, upstream services) and are listed separately below.
+- Severity is a _proposed_ triage level for the site owner, not a confirmed business impact.
 - Where an automated test exists it is named. Tests for open defects are marked `test.fail()` (they appear as
   "expected to fail" in the report and flip to "unexpected pass" once fixed) or annotate the report with a
   `known-issue` entry; nothing is hidden behind a skip.
-- Security-relevant items describe configuration only. No exploitation was attempted, and none is described.
+- No exploitation was attempted. Security-relevant items are shared with the site owner and are not part of this
+  public document, which is why some IDs are missing.
 - All tests ran with a network guard that blocks every write to production, so none of the behaviours below were
   triggered for real (no leads, accounts or orders were created).
 
-| ID                  | Site         | Summary                                                               | Proposed severity    | Evidence                |
-| ------------------- | ------------ | --------------------------------------------------------------------- | -------------------- | ----------------------- |
-| [F-FH-01](#f-fh-01) | Faithfulness | Google Ads tag referenced on every page but blocked by the site’s CSP | Medium               | Automated (`test.fail`) |
-| [F-FH-02](#f-fh-02) | Faithfulness | Services menu cannot be opened reliably with the keyboard             | Medium               | Automated (`test.fail`) |
-| [F-FH-03](#f-fh-03) | Faithfulness | `/refer` renders without the site header, footer and `<main>`         | Medium               | Automated (`test.fail`) |
-| [F-FH-04](#f-fh-04) | Faithfulness | Invalid list markup on most pages (axe, serious)                      | Low                  | Automated (annotated)   |
-| [F-FH-05](#f-fh-05) | Faithfulness | Low-contrast step numerals on `/paying-for-care`                      | Low                  | Automated (annotated)   |
-| [F-AS-02](#f-as-02) | AfriShop     | Raw "Edge Function" error shown to shoppers                           | Medium               | Automated (`test.fail`) |
-| [F-AS-04](#f-as-04) | AfriShop     | Soft 404s: unknown routes and products return HTTP 200                | Low–Medium           | Automated (`test.fail`) |
-| [F-AS-05](#f-as-05) | AfriShop     | Icon-only buttons and cart checkboxes have no accessible name         | High (accessibility) | Automated (`test.fail`) |
-| [F-AS-06](#f-as-06) | AfriShop     | Internal provider name and English strings in the French store        | Low                  | Manual                  |
-| [F-AS-07](#f-as-07) | AfriShop     | `settings` request returns HTTP 406 on every page load                | Low                  | Automated (annotated)   |
-| [F-AS-08](#f-as-08) | AfriShop     | The site’s CSP blocks resources it requests (Google Fonts, TikTok)    | Low                  | Automated (annotated)   |
-| [F-AS-09](#f-as-09) | AfriShop     | "Télécharger l'app" footer link lands on the popular-products page    | Low                  | Manual                  |
-| [F-AS-11](#f-as-11) | AfriShop     | Search results sorted "Prix: croissant" are not in price order        | High (functional)    | Automated (`test.fail`) |
-| [F-AS-12](#f-as-12) | AfriShop     | Catalogue endpoints return empty successes under sustained traffic    | High (availability)  | Automated (diagnostics) |
-| [F-AS-13](#f-as-13) | AfriShop     | Prices and helper text fail WCAG AA contrast                          | Medium               | Automated (annotated)   |
-| [F-AS-14](#f-as-14) | AfriShop     | Small touch targets; visible labels differ from accessible names      | Low                  | Automated (annotated)   |
-| [F-AS-15](#f-as-15) | AfriShop     | Firefox rejects two tracking cookies for an invalid domain            | Low                  | Automated (annotated)   |
-| [F-AS-16](#f-as-16) | AfriShop     | Search shows "0 produits affichés" while results are still loading    | Low                  | Automated (diagnostics) |
+| ID                  | Site         | Summary                                                               | Classification             | Proposed severity    | Evidence                |
+| ------------------- | ------------ | --------------------------------------------------------------------- | -------------------------- | -------------------- | ----------------------- |
+| [F-FH-01](#f-fh-01) | Faithfulness | Google Ads tag referenced on every page but blocked by the site’s CSP | Verified defect            | Medium               | Automated (`test.fail`) |
+| [F-FH-02](#f-fh-02) | Faithfulness | Services menu cannot be opened reliably with the keyboard             | Verified defect            | Medium               | Automated (`test.fail`) |
+| [F-FH-03](#f-fh-03) | Faithfulness | `/refer` renders without the site header, footer and `<main>`         | Verified defect            | Medium               | Automated (`test.fail`) |
+| [F-FH-04](#f-fh-04) | Faithfulness | Invalid list markup on most pages (axe, serious)                      | Verified defect            | Low                  | Automated (annotated)   |
+| [F-FH-05](#f-fh-05) | Faithfulness | Low-contrast step numerals on `/paying-for-care`                      | Verified defect            | Low                  | Automated (annotated)   |
+| [F-AS-02](#f-as-02) | AfriShop     | Raw "Edge Function" error shown to shoppers                           | Verified defect            | Medium               | Automated (`test.fail`) |
+| [F-AS-04](#f-as-04) | AfriShop     | Soft 404s: unknown routes and products return HTTP 200                | Verified defect            | Low–Medium           | Automated (`test.fail`) |
+| [F-AS-05](#f-as-05) | AfriShop     | Icon-only buttons and cart checkboxes have no accessible name         | Verified defect            | High (accessibility) | Automated (`test.fail`) |
+| [F-AS-06](#f-as-06) | AfriShop     | Internal provider name and English strings in the French store        | Observation                | Low                  | Manual                  |
+| [F-AS-07](#f-as-07) | AfriShop     | `settings` request returns HTTP 406 on every page load                | Observation                | Low                  | Automated (annotated)   |
+| [F-AS-08](#f-as-08) | AfriShop     | The site’s CSP blocks resources it requests (Google Fonts, TikTok)    | Verified defect            | Low                  | Automated (annotated)   |
+| [F-AS-09](#f-as-09) | AfriShop     | "Télécharger l'app" footer link lands on the popular-products page    | Observation                | Low                  | Manual                  |
+| [F-AS-11](#f-as-11) | AfriShop     | Search results sorted "Prix: croissant" are not in price order        | Verified defect            | High (functional)    | Automated (`test.fail`) |
+| [F-AS-12](#f-as-12) | AfriShop     | Catalogue endpoints return empty successes under sustained traffic    | Observation (load-related) | High (availability)  | Automated (diagnostics) |
+| [F-AS-13](#f-as-13) | AfriShop     | Prices and helper text fail WCAG AA contrast                          | Verified defect            | Medium               | Automated (annotated)   |
+| [F-AS-14](#f-as-14) | AfriShop     | Small touch targets; visible labels differ from accessible names      | Verified defect            | Low                  | Automated (annotated)   |
+| [F-AS-15](#f-as-15) | AfriShop     | Firefox rejects two tracking cookies for an invalid domain            | Observation                | Low                  | Automated (annotated)   |
+| [F-AS-16](#f-as-16) | AfriShop     | Search shows "0 produits affichés" while results are still loading    | Verified defect            | Low                  | Automated (diagnostics) |
 
 `F-AS-10` (an empty `/category/electronics`) was raised during exploration and **withdrawn**: it was caused by the
 exploration script blocking `HEAD` requests, not by the site.
+
+## Environment-related failures
+
+| Date (UTC) | Site     | What happened                                                                                                                                                         | How the suite reports it                                                                                            |
+| ---------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-30 | AfriShop | The storefront's backend API hostname stopped resolving (NXDOMAIN from public DNS resolvers), so catalogue, search and cart-pricing requests failed for every visitor | Failed tests carry an `environment` annotation ("backend unreachable") and are counted as _env._ in the run summary |
+
+These are not counted as application regressions, but they are not hidden either: the run stays red until the
+environment recovers, because shoppers are affected.
 
 ---
 
@@ -144,7 +157,8 @@ keyboard and keeps its links reachable`.
 **The site’s own CSP blocks resources it requests**
 
 - The Google Fonts stylesheets (Inter, Lora, Space Mono) are blocked by `style-src`, so the intended fonts never
-  load; the TikTok pixel’s IPv6 endpoint is blocked by `connect-src`. Annotated by the console sweep.
+  load; the TikTok pixel’s IPv6 endpoint is blocked by `connect-src`. Annotated by the console sweep, together with
+  a browser console notice the `<meta>`-delivered policy triggers on every page.
 
 ### F-AS-09
 
