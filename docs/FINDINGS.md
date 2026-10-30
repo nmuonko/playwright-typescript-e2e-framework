@@ -13,26 +13,26 @@ Observations made while building and running this suite against the live sites (
 - All tests ran with a network guard that blocks every write to production, so none of the behaviours below were
   triggered for real (no leads, accounts or orders were created).
 
-| ID                  | Site         | Summary                                                               | Proposed severity     | Evidence                |
-| ------------------- | ------------ | --------------------------------------------------------------------- | --------------------- | ----------------------- |
-| [F-FH-01](#f-fh-01) | Faithfulness | Google Ads tag referenced on every page but blocked by the site’s CSP | Medium                | Automated (`test.fail`) |
-| [F-FH-02](#f-fh-02) | Faithfulness | Services menu cannot be opened reliably with the keyboard             | Medium                | Automated (`test.fail`) |
-| [F-FH-03](#f-fh-03) | Faithfulness | `/refer` renders without the site header, footer and `<main>`         | Medium                | Automated (`test.fail`) |
-| [F-FH-04](#f-fh-04) | Faithfulness | Invalid list markup on most pages (axe, serious)                      | Low                   | Automated (annotated)   |
-| [F-FH-05](#f-fh-05) | Faithfulness | Low-contrast step numerals on `/paying-for-care`                      | Low                   | Automated (annotated)   |
-| [F-AS-02](#f-as-02) | AfriShop     | Raw "Edge Function" error shown to shoppers                           | Medium                | Automated (`test.fail`) |
-| [F-AS-04](#f-as-04) | AfriShop     | Soft 404s: unknown routes and products return HTTP 200                | Low–Medium            | Automated (`test.fail`) |
-| [F-AS-05](#f-as-05) | AfriShop     | Icon-only buttons and cart checkboxes have no accessible name         | High (accessibility)  | Automated (`test.fail`) |
-| [F-AS-06](#f-as-06) | AfriShop     | Internal provider name and English strings in the French store        | Low                   | Manual                  |
-| [F-AS-07](#f-as-07) | AfriShop     | `settings` request returns HTTP 406 on every page load                | Low                   | Automated (annotated)   |
-| [F-AS-08](#f-as-08) | AfriShop     | The site’s CSP blocks resources it requests (Google Fonts, TikTok)    | Low                   | Automated (annotated)   |
-| [F-AS-09](#f-as-09) | AfriShop     | "Télécharger l'app" footer link lands on the popular-products page    | Low                   | Manual                  |
-| [F-AS-11](#f-as-11) | AfriShop     | Search results sorted "Prix: croissant" are not in price order        | High (functional)     | Automated (`test.fail`) |
-| [F-AS-12](#f-as-12) | AfriShop     | Catalogue endpoints return empty successes under sustained traffic    | High (availability)   | Automated (diagnostics) |
-| [F-AS-13](#f-as-13) | AfriShop     | Prices and helper text fail WCAG AA contrast                          | Medium                | Automated (annotated)   |
-| [F-AS-14](#f-as-14) | AfriShop     | Small touch targets; visible labels differ from accessible names      | Low                   | Automated (annotated)   |
-| [F-AS-15](#f-as-15) | AfriShop     | Firefox rejects two tracking cookies for an invalid domain            | Low                   | Automated (annotated)   |
-| [F-AS-16](#f-as-16) | AfriShop     | Search shows "0 produits affichés" while results are still loading    | Low                   | Automated (diagnostics) |
+| ID                  | Site         | Summary                                                               | Proposed severity    | Evidence                |
+| ------------------- | ------------ | --------------------------------------------------------------------- | -------------------- | ----------------------- |
+| [F-FH-01](#f-fh-01) | Faithfulness | Google Ads tag referenced on every page but blocked by the site’s CSP | Medium               | Automated (`test.fail`) |
+| [F-FH-02](#f-fh-02) | Faithfulness | Services menu cannot be opened reliably with the keyboard             | Medium               | Automated (`test.fail`) |
+| [F-FH-03](#f-fh-03) | Faithfulness | `/refer` renders without the site header, footer and `<main>`         | Medium               | Automated (`test.fail`) |
+| [F-FH-04](#f-fh-04) | Faithfulness | Invalid list markup on most pages (axe, serious)                      | Low                  | Automated (annotated)   |
+| [F-FH-05](#f-fh-05) | Faithfulness | Low-contrast step numerals on `/paying-for-care`                      | Low                  | Automated (annotated)   |
+| [F-AS-02](#f-as-02) | AfriShop     | Raw "Edge Function" error shown to shoppers                           | Medium               | Automated (`test.fail`) |
+| [F-AS-04](#f-as-04) | AfriShop     | Soft 404s: unknown routes and products return HTTP 200                | Low–Medium           | Automated (`test.fail`) |
+| [F-AS-05](#f-as-05) | AfriShop     | Icon-only buttons and cart checkboxes have no accessible name         | High (accessibility) | Automated (`test.fail`) |
+| [F-AS-06](#f-as-06) | AfriShop     | Internal provider name and English strings in the French store        | Low                  | Manual                  |
+| [F-AS-07](#f-as-07) | AfriShop     | `settings` request returns HTTP 406 on every page load                | Low                  | Automated (annotated)   |
+| [F-AS-08](#f-as-08) | AfriShop     | The site’s CSP blocks resources it requests (Google Fonts, TikTok)    | Low                  | Automated (annotated)   |
+| [F-AS-09](#f-as-09) | AfriShop     | "Télécharger l'app" footer link lands on the popular-products page    | Low                  | Manual                  |
+| [F-AS-11](#f-as-11) | AfriShop     | Search results sorted "Prix: croissant" are not in price order        | High (functional)    | Automated (`test.fail`) |
+| [F-AS-12](#f-as-12) | AfriShop     | Catalogue endpoints return empty successes under sustained traffic    | High (availability)  | Automated (diagnostics) |
+| [F-AS-13](#f-as-13) | AfriShop     | Prices and helper text fail WCAG AA contrast                          | Medium               | Automated (annotated)   |
+| [F-AS-14](#f-as-14) | AfriShop     | Small touch targets; visible labels differ from accessible names      | Low                  | Automated (annotated)   |
+| [F-AS-15](#f-as-15) | AfriShop     | Firefox rejects two tracking cookies for an invalid domain            | Low                  | Automated (annotated)   |
+| [F-AS-16](#f-as-16) | AfriShop     | Search shows "0 produits affichés" while results are still loading    | Low                  | Automated (diagnostics) |
 
 `F-AS-10` (an empty `/category/electronics`) was raised during exploration and **withdrawn**: it was caused by the
 exploration script blocking `HEAD` requests, not by the site.
@@ -96,7 +96,6 @@ keyboard and keeps its links reachable`.
 
 ## AfriShop
 
-
 ### F-AS-02
 
 **Raw technical error shown when the checkout backend is unreachable**
@@ -105,7 +104,6 @@ keyboard and keeps its links reachable`.
   level.
 - **Expected:** A friendly, French message ("Erreur de connexion, réessayez…").
 - **Actual:** "Failed to send a request to the Edge Function" (the Supabase client’s internal error) is displayed.
-
 
 ### F-AS-04
 

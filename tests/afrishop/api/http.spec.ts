@@ -22,7 +22,6 @@ test.describe('AfriShop HTTP contract', { tag: ['@api', '@regression'] }, () => 
     expectBaselineSecurityHeaders((await request.get('/')).headers());
   });
 
-
   test('fingerprinted assets are cached immutably for a year', async ({ request }) => {
     const asset = /\/assets\/[\w.-]+\.js/.exec(await (await request.get('/')).text())?.[0];
     expect(asset, 'storefront should reference a fingerprinted script').toBeTruthy();
