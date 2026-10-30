@@ -1,0 +1,173 @@
+name: E2E suite
+
+# Reusable: runs the smoke or regression suite against both production sites and merges the reports
+# into one report section (Playwright HTML, Allure, JUnit, summary). Called by ci.yml, nightly-smoke.yml
+# and weekly-regression.yml; can also be started by hand from the Actions tab (without publishing).
+on:
+  workflow_call:
+    inputs:
+      suite:
+        description: smoke or regression
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Which suite to run against production
+        type: choice
+        options: [smoke, regression]
+        default: smoke
+
+permissions:
+  contents: read
+
+env:
+  CI: 'true'
+  # Bounded load on production: two workers per site, one retry (see playwright.config.ts).
+  WORKERS: '2'
+
+jobs:
+  safety:
+    name: Safety controls (network guard self-tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+      options: --ipc=host
+    env:
+      HOME: /root
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # Production tests only start if the fail-closed guard, credential masking and the
+      # report publication gate prove they work. These tests never leave the machine.
+      - name: Verify the network guard fails closed
+        run: npx playwright test --project=framework
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: blob-framework-${{ inputs.suite }}
+          path: blob-report/
+          retention-days: 3
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: allure-framework-${{ inputs.suite }}
+          path: allure-results/
+          retention-days: 3
+
+  test:
+    name: ${{ inputs.suite == 'smoke' && 'Smoke' || 'Regression' }} · ${{ matrix.title }}
+    needs: safety
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.suite == 'smoke' && 20 || 75 }}
+    # One job per site at a time across every workflow, so runs never stack up on production.
+    concurrency:
+      group: production-${{ matrix.app }}
+      cancel-in-progress: false
+    # The pinned image ships the browsers and is the one the visual baselines were rendered in.
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+      options: --ipc=host
+    env:
+      HOME: /root
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: faithfulness
+            title: Faithfulness Home Care
+          - app: afrishop
+            title: AfriShop
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Smoke (Chromium + API)
+        if: ${{ inputs.suite == 'smoke' }}
+        run: npx playwright test --grep @smoke --project=${{ matrix.app }}-chromium --project=${{ matrix.app }}-api
+      - name: Regression (Chromium, Firefox, WebKit, iPhone 13, API)
+        if: ${{ inputs.suite == 'regression' }}
+        run: npx playwright test --project='${{ matrix.app }}-*'
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: blob-${{ matrix.app }}-${{ inputs.suite }}
+          path: blob-report/
+          retention-days: 3
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: allure-${{ matrix.app }}-${{ inputs.suite }}
+          path: allure-results/
+          retention-days: 3
+      # Screenshots, traces and videos of failures, only after the publication gate has scanned them.
+      - name: Scan failure evidence
+        id: scan
+        if: ${{ failure() }}
+        run: node scripts/scan-report.ts test-results
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ failure() && steps.scan.outcome == 'success' }}
+        with:
+          name: failure-evidence-${{ matrix.app }}-${{ inputs.suite }}
+          path: test-results/
+          retention-days: 14
+
+  report:
+    name: Merge reports
+    needs: [safety, test]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: all-blob-reports
+          pattern: blob-*-${{ inputs.suite }}
+          merge-multiple: true
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: allure-results
+          pattern: allure-*-${{ inputs.suite }}
+          merge-multiple: true
+      - name: Merge Playwright reports (HTML, JSON, JUnit)
+        run: npx playwright merge-reports --reporter html,json,junit ./all-blob-reports
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_FILE: results/results.json
+          PLAYWRIGHT_JUNIT_OUTPUT_FILE: results/junit.xml
+      - name: Summarise results per application
+        run: node scripts/report-summary.ts results/results.json ${{ inputs.suite }} site/${{ inputs.suite }}/summary.json >> "$GITHUB_STEP_SUMMARY"
+      - name: Restore Allure history from the last published run
+        run: scripts/ci/fetch-report-section.sh ${{ inputs.suite }} previous && mkdir -p allure-history && cp previous/history.jsonl allure-history/ 2>/dev/null || true
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Generate Allure report
+        run: npx allure generate allure-results --output site/${{ inputs.suite }}/allure
+      - name: Assemble report section
+        run: |
+          cp -r playwright-report site/${{ inputs.suite }}/playwright
+          cp results/junit.xml site/${{ inputs.suite }}/
+          cp allure-history/history.jsonl site/${{ inputs.suite }}/ 2>/dev/null || true
+      - name: Publication gate (secrets and credentials)
+        run: node scripts/scan-report.ts site
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: report-section-${{ inputs.suite }}
+          path: site/${{ inputs.suite }}/
+          retention-days: 90

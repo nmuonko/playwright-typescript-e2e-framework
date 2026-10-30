@@ -1,0 +1,36 @@
+name: Nightly production smoke
+
+# Critical journeys on both production sites every night, published to GitHub Pages.
+on:
+  schedule:
+    # 06:00 UTC daily (02:00 US Eastern), outside both businesses' hours.
+    - cron: '0 6 * * *'
+      timezone: 'UTC'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Smoke
+    uses: ./.github/workflows/e2e.yml
+    permissions:
+      contents: read
+      actions: read
+    with:
+      suite: smoke
+
+  publish:
+    name: Publish
+    needs: smoke
+    # Publish whatever happened, failures included, as long as the report itself was built.
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/publish-report.yml
+    permissions:
+      contents: read
+      actions: read
+      pages: write
+      id-token: write
+    with:
+      suite: smoke

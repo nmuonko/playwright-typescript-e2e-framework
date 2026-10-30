@@ -1,0 +1,37 @@
+name: Weekly full regression
+
+# Every suite on Chromium, Firefox, WebKit, iPhone 13 and API, once a week. Link sweeps, visual
+# comparison and performance checks run here rather than nightly to keep production traffic low.
+on:
+  schedule:
+    # Sundays 07:00 UTC, an hour after the nightly smoke.
+    - cron: '0 7 * * 0'
+      timezone: 'UTC'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    name: Regression
+    uses: ./.github/workflows/e2e.yml
+    permissions:
+      contents: read
+      actions: read
+    with:
+      suite: regression
+
+  publish:
+    name: Publish
+    needs: regression
+    # Publish whatever happened, failures included, as long as the report itself was built.
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/publish-report.yml
+    permissions:
+      contents: read
+      actions: read
+      pages: write
+      id-token: write
+    with:
+      suite: regression
