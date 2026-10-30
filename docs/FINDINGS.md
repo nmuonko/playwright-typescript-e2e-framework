@@ -19,7 +19,7 @@ Defects and observations found while building and running this suite against the
 
 | ID                  | Site         | Summary                                                               | Classification             | Proposed severity    | Evidence                |
 | ------------------- | ------------ | --------------------------------------------------------------------- | -------------------------- | -------------------- | ----------------------- |
-| [F-FH-01](#f-fh-01) | Faithfulness | Google Ads tag referenced on every page but blocked by the site’s CSP | Resolved                                | Medium                          | Automated (fixed)                |
+| [F-FH-01](#f-fh-01) | Faithfulness | Google Ads tag referenced on every page but blocked by the site’s CSP | Resolved                   | Medium               | Automated (fixed)       |
 | [F-FH-02](#f-fh-02) | Faithfulness | Services menu cannot be opened reliably with the keyboard             | Verified defect            | Medium               | Automated (`test.fail`) |
 | [F-FH-03](#f-fh-03) | Faithfulness | `/refer` renders without the site header, footer and `<main>`         | Verified defect            | Medium               | Automated (`test.fail`) |
 | [F-FH-04](#f-fh-04) | Faithfulness | Invalid list markup on most pages (axe, serious)                      | Verified defect            | Low                  | Automated (annotated)   |
