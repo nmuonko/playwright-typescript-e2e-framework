@@ -1,4 +1,9 @@
-import { defineConfig, devices, type PlaywrightTestProject } from '@playwright/test';
+import {
+  defineConfig,
+  devices,
+  type PlaywrightTestProject,
+  type ReporterDescription,
+} from '@playwright/test';
 import { config } from './src/core/config';
 
 interface Site {
@@ -63,10 +68,25 @@ function projectsFor(site: Site): PlaywrightTestProject[] {
   ];
 }
 
+// Raw Allure results; `npm run report:allure` (or CI) turns them into the Allure report.
+const allure: ReporterDescription = [
+  'allure-playwright',
+  {
+    resultsDir: 'allure-results',
+    environmentInfo: {
+      'Faithfulness base URL': config.FAITHFULNESS_BASE_URL,
+      'AfriShop base URL': config.AFRISHOP_BASE_URL,
+      Node: process.version,
+      OS: `${process.platform} ${process.arch}`,
+    },
+  },
+];
+
 export default defineConfig({
   fullyParallel: true,
   forbidOnly: config.CI,
-  retries: config.CI ? 2 : 0,
+  // One retry in CI: enough to capture a trace of an intermittent failure without repeating traffic.
+  retries: config.CI ? 1 : 0,
   // These are live business sites: a small, fixed worker pool keeps load negligible.
   workers: config.WORKERS,
   timeout: 60_000,
@@ -77,9 +97,10 @@ export default defineConfig({
   // CI must compare against committed baselines, never regenerate them.
   updateSnapshots: config.CI ? 'none' : 'missing',
   snapshotPathTemplate: '{testDir}/__screenshots__/{projectName}/{testFilePath}/{arg}{ext}',
+  // CI writes blob reports that are merged across steps and shards into HTML, JSON and JUnit.
   reporter: config.CI
-    ? [['blob'], ['github'], ['list']]
-    : [['list'], ['html', { open: 'never' }], ['junit', { outputFile: 'test-results/junit.xml' }]],
+    ? [['blob'], ['github'], ['list'], allure]
+    : [['list'], ['html', { open: 'never' }], ['junit', { outputFile: 'test-results/junit.xml' }], allure],
   use: {
     trace: 'on-first-retry',
     video: 'on-first-retry',

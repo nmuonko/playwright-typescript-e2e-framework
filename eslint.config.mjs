@@ -3,13 +3,24 @@ import playwright from 'eslint-plugin-playwright';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['node_modules/', 'playwright-report/', 'test-results/', 'blob-report/', 'all-blob-reports/'] },
+  {
+    ignores: [
+      'node_modules/',
+      'playwright-report/',
+      'test-results/',
+      'blob-report/',
+      'all-blob-reports/',
+      'allure-results/',
+      'allure-report/',
+      'site/',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   {
     languageOptions: {
       parserOptions: {
-        projectService: { allowDefaultProject: ['eslint.config.mjs'] },
+        projectService: { allowDefaultProject: ['eslint.config.mjs', 'allurerc.mjs'] },
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -50,5 +61,5 @@ export default tseslint.config(
       'playwright/no-conditional-expect': 'off',
     },
   },
-  { files: ['eslint.config.mjs'], ...tseslint.configs.disableTypeChecked },
+  { files: ['eslint.config.mjs', 'allurerc.mjs'], ...tseslint.configs.disableTypeChecked },
 );

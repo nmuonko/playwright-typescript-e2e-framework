@@ -5,3 +5,8 @@ blob-report
 all-blob-reports
 package-lock.json
 **/*-snapshots/**
+allure-results
+allure-report
+allure-history
+site
+results

@@ -1,6 +1,7 @@
 import { test as base, expect, type ConsoleMessage, type Page } from '@playwright/test';
 import { NetworkGuard, type NetworkPolicy } from '../network/network-guard';
 import { readOnlyRequest } from '../network/safe-request';
+import { labelForReports } from '../reporting';
 
 export interface ConsoleEntry {
   readonly type: 'console' | 'pageerror';
@@ -14,6 +15,8 @@ export interface CoreFixtures {
   networkGuard: NetworkGuard;
   /** Console errors and uncaught exceptions, excluding noise caused by the guard's own aborts. */
   consoleErrors: ConsoleEntry[];
+  /** Automatic: labels every test with its application, suite type and browser for the Allure report. */
+  reportLabels: undefined;
 }
 
 const BLOCKED_BY_GUARD = /ERR_BLOCKED_BY_CLIENT|blocked by client|NS_ERROR_FAILURE|Load failed/i;
@@ -65,6 +68,15 @@ export const test = base.extend<CoreFixtures>({
   consoleErrors: async ({ page, networkGuard }, use) => {
     await use(watchConsoleErrors(page, networkGuard));
   },
+
+  reportLabels: [
+    // eslint-disable-next-line no-empty-pattern -- Playwright requires a destructured first argument.
+    async ({}, use, testInfo) => {
+      await labelForReports(testInfo);
+      await use(undefined);
+    },
+    { auto: true },
+  ],
 
   // API tests talk to production directly; only GET/HEAD are allowed through.
   request: async ({ request }, use) => {
